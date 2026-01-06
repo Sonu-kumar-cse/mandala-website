@@ -1,0 +1,60 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+.container {
+  width: 360px;
+  margin: 80px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+}
+
+input {
+  width: 100%;
+  margin-top: 5px;
+}
+
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  background: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #aaa;
+}
+
+#status {
+  margin-top: 15px;
+  text-align: center;
+}
+
+#downloadLink {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  color: #0070f3;
+  text-decoration: none;
+}
+
+.hidden {
+  display: none;
+}
