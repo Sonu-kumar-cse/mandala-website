@@ -1,11 +1,13 @@
 let BACKEND_URL = "";
+let jobRunning = false;
 
-// Load saved URL on page load
+// -------------------- INIT --------------------
+
 window.onload = () => {
-  const savedUrl = localStorage.getItem("BACKEND_URL");
-  if (savedUrl) {
-    BACKEND_URL = savedUrl;
-    document.getElementById("backendUrlInput").value = savedUrl;
+  const saved = localStorage.getItem("BACKEND_URL");
+  if (saved) {
+    BACKEND_URL = saved;
+    document.getElementById("backendUrlInput").value = saved;
   }
 };
 
@@ -13,19 +15,20 @@ function saveBackendUrl() {
   const url = document.getElementById("backendUrlInput").value.trim();
 
   if (!url.startsWith("http")) {
-    alert("Please enter a valid URL starting with http or https");
+    alert("Please enter a valid backend URL");
     return;
   }
 
-  BACKEND_URL = url.replace(/\/$/, ""); // remove trailing slash
-  localStorage.setItem("BACKEND_URL", BACKEND_URL);
-
-  alert("Backend URL saved ✔");
+  BACKEND_URL = url;
+  localStorage.setItem("BACKEND_URL", url);
+  alert("Backend URL saved");
 }
 
-async function run() {
-  if (!BACKEND_URL) {
-    alert("Please enter and save the Backend URL first");
+// -------------------- START PROCESS --------------------
+
+async function startProcessing() {
+  if (jobRunning) {
+    alert("A calculation is already running. Please wait.");
     return;
   }
 
@@ -33,49 +36,89 @@ async function run() {
   const p1 = document.getElementById("param1").value;
   const p2 = document.getElementById("param2").value;
   const status = document.getElementById("status");
-  const download = document.getElementById("downloadLink");
-  const button = document.getElementById("runBtn");
 
   if (!image) {
     alert("Please upload an image");
     return;
   }
 
-  button.disabled = true;
-  status.innerText = "Processing… please wait";
-  download.classList.add("hidden");
+  if (p1 === "" || p2 === "") {
+    alert("Please enter both integer values");
+    return;
+  }
 
   const formData = new FormData();
   formData.append("image", image);
-  formData.append("x", p1);
-  formData.append("y", p2);
+  formData.append("p1", p1);
+  formData.append("p2", p2);
 
   try {
-    const response = await fetch(`${BACKEND_URL}/process`, {
+    jobRunning = true;
+    toggleUI(true);
+
+    status.innerText = "Please wait while we are calculating...";
+
+    const res = await fetch(`${BACKEND_URL}/start`, {
       method: "POST",
-      body: formData,
-      headers: {
-        "X-Auth-Token": "MEETING_SECRET" // optional
-      }
+      body: formData
     });
 
-    if (!response.ok) {
-      throw new Error("Backend error");
+    if (!res.ok) {
+      throw new Error("Backend rejected the request");
     }
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    document.getElementById("getOutputBtn").disabled = false;
 
-    download.href = url;
-    download.download = "output.svg";
-    download.innerText = "Download Output";
-    download.classList.remove("hidden");
+  } catch (err) {
+    jobRunning = false;
+    toggleUI(false);
+    status.innerText = "Error ❌";
+    alert(err.message);
+  }
+}
 
-    status.innerText = "Done ✔";
+// -------------------- GET OUTPUT --------------------
+
+async function getOutput() {
+  const status = document.getElementById("status");
+  const download = document.getElementById("downloadLink");
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/status`);
+    const data = await res.json();
+
+    if (data.status === "running") {
+      status.innerText = "Please wait more...";
+      return;
+    }
+
+    if (data.status === "done") {
+      const out = await fetch(`${BACKEND_URL}/result`);
+      const blob = await out.blob();
+
+      const url = URL.createObjectURL(blob);
+      download.href = url;
+      download.download = "output.svg";
+      download.innerText = "Download Output";
+      download.classList.remove("hidden");
+
+      status.innerText = "Calculation completed ✔";
+
+      jobRunning = false;
+      toggleUI(false);
+    }
+
   } catch (err) {
     status.innerText = "Error ❌";
     alert(err.message);
-  } finally {
-    button.disabled = false;
   }
+}
+
+// -------------------- UI CONTROL --------------------
+
+function toggleUI(disabled) {
+  document.getElementById("startBtn").disabled = disabled;
+  document.getElementById("imageInput").disabled = disabled;
+  document.getElementById("param1").disabled = disabled;
+  document.getElementById("param2").disabled = disabled;
 }
