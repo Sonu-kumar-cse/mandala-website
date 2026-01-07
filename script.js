@@ -6,8 +6,8 @@ let jobRunning = false;
 window.onload = () => {
   const saved = localStorage.getItem("BACKEND_URL");
   if (saved) {
-    BACKEND_URL = saved;
-    document.getElementById("backendUrlInput").value = saved;
+    BACKEND_URL = saved.replace(/\/$/, ""); // Normalize: remove trailing slash
+    document.getElementById("backendUrlInput").value = BACKEND_URL;
   }
 };
 
@@ -19,8 +19,9 @@ function saveBackendUrl() {
     return;
   }
 
-  BACKEND_URL = url;
-  localStorage.setItem("BACKEND_URL", url);
+  // Normalize URL: remove trailing slash
+  BACKEND_URL = url.replace(/\/$/, "");
+  localStorage.setItem("BACKEND_URL", BACKEND_URL);
   alert("Backend URL saved");
 }
 
@@ -53,19 +54,32 @@ async function startProcessing() {
   formData.append("p2", p2);
 
   try {
+    if (!BACKEND_URL) {
+      throw new Error("Please enter and save the Backend URL first");
+    }
+
     jobRunning = true;
     toggleUI(true);
 
     status.innerText = "Please wait while we are calculating...";
+
+    console.log("Sending request to:", `${BACKEND_URL}/start`);
 
     const res = await fetch(`${BACKEND_URL}/start`, {
       method: "POST",
       body: formData
     });
 
+    console.log("Response status:", res.status, res.statusText);
+
     if (!res.ok) {
-      throw new Error("Backend rejected the request");
+      const errorText = await res.text().catch(() => "Unknown error");
+      console.error("Backend error:", errorText);
+      throw new Error(`Backend error (${res.status}): ${errorText || res.statusText}`);
     }
+
+    const result = await res.json();
+    console.log("Start response:", result);
 
     document.getElementById("getOutputBtn").disabled = false;
 
@@ -73,7 +87,11 @@ async function startProcessing() {
     jobRunning = false;
     toggleUI(false);
     status.innerText = "Error ❌";
-    alert(err.message);
+    console.error("Start processing error:", err);
+    
+    // Show more detailed error message
+    const errorMsg = err.message || "Network error. Check console for details.";
+    alert(errorMsg);
   }
 }
 
@@ -84,8 +102,19 @@ async function getOutput() {
   const download = document.getElementById("downloadLink");
 
   try {
+    if (!BACKEND_URL) {
+      throw new Error("Backend URL not set");
+    }
+
+    console.log("Checking status:", `${BACKEND_URL}/status`);
     const res = await fetch(`${BACKEND_URL}/status`);
+    
+    if (!res.ok) {
+      throw new Error(`Status check failed: ${res.status} ${res.statusText}`);
+    }
+
     const data = await res.json();
+    console.log("Status response:", data);
 
     if (data.status === "running") {
       status.innerText = "Please wait more...";
@@ -93,8 +122,15 @@ async function getOutput() {
     }
 
     if (data.status === "done") {
+      console.log("Fetching result:", `${BACKEND_URL}/result`);
       const out = await fetch(`${BACKEND_URL}/result`);
+      
+      if (!out.ok) {
+        throw new Error(`Result fetch failed: ${out.status} ${out.statusText}`);
+      }
+
       const blob = await out.blob();
+      console.log("Result blob size:", blob.size);
 
       const url = URL.createObjectURL(blob);
       download.href = url;
@@ -106,11 +142,14 @@ async function getOutput() {
 
       jobRunning = false;
       toggleUI(false);
+    } else if (data.status === "idle") {
+      status.innerText = "No job running. Please start processing first.";
     }
 
   } catch (err) {
     status.innerText = "Error ❌";
-    alert(err.message);
+    console.error("Get output error:", err);
+    alert(err.message || "Failed to get output. Check console for details.");
   }
 }
 
