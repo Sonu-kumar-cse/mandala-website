@@ -106,45 +106,38 @@ async function getOutput() {
       throw new Error("Backend URL not set");
     }
 
-    console.log("Checking status:", `${BACKEND_URL}/status`);
-    const res = await fetch(`${BACKEND_URL}/status`);
+    console.log("Fetching result:", `${BACKEND_URL}/result`);
+    const res = await fetch(`${BACKEND_URL}/result`);
     
-    if (!res.ok) {
-      throw new Error(`Status check failed: ${res.status} ${res.statusText}`);
-    }
+    console.log("Response status:", res.status, res.statusText);
 
-    const data = await res.json();
-    console.log("Status response:", data);
-
-    if (data.status === "running") {
-      status.innerText = "Please wait more...";
+    // If status is 202, it means "Please wait more"
+    if (res.status === 202) {
+      const data = await res.json();
+      status.innerText = data.message || "Please wait more...";
+      console.log("Job still processing:", data);
       return;
     }
 
-    if (data.status === "done") {
-      console.log("Fetching result:", `${BACKEND_URL}/result`);
-      const out = await fetch(`${BACKEND_URL}/result`);
-      
-      if (!out.ok) {
-        throw new Error(`Result fetch failed: ${out.status} ${out.statusText}`);
-      }
-
-      const blob = await out.blob();
-      console.log("Result blob size:", blob.size);
-
-      const url = URL.createObjectURL(blob);
-      download.href = url;
-      download.download = "output.svg";
-      download.innerText = "Download Output";
-      download.classList.remove("hidden");
-
-      status.innerText = "Calculation completed ✔";
-
-      jobRunning = false;
-      toggleUI(false);
-    } else if (data.status === "idle") {
-      status.innerText = "No job running. Please start processing first.";
+    // If status is not OK, it's an error
+    if (!res.ok) {
+      throw new Error(`Result fetch failed: ${res.status} ${res.statusText}`);
     }
+
+    // If we get here, the file is ready
+    const blob = await res.blob();
+    console.log("Result blob size:", blob.size);
+
+    const url = URL.createObjectURL(blob);
+    download.href = url;
+    download.download = "output.svg";
+    download.innerText = "Download Output";
+    download.classList.remove("hidden");
+
+    status.innerText = "Calculation completed ✔";
+
+    jobRunning = false;
+    toggleUI(false);
 
   } catch (err) {
     status.innerText = "Error ❌";
