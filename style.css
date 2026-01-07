@@ -14,38 +14,54 @@ body {
 
 h2 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
-label {
-  display: block;
-  margin-top: 15px;
-}
+/* -------- Inputs -------- */
 
-input {
+input[type="file"],
+input[type="text"] {
   width: 100%;
-  margin-top: 5px;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
+
+/* -------- Buttons -------- */
 
 button {
   width: 100%;
-  margin-top: 20px;
   padding: 10px;
+  margin-top: 8px;
   background: #0070f3;
-  color: white;
   border: none;
-  border-radius: 5px;
+  color: white;
+  border-radius: 4px;
+  font-size: 14px;
   cursor: pointer;
 }
 
-button:disabled {
-  background: #aaa;
+button:hover {
+  background: #005fd1;
 }
 
-#status {
-  margin-top: 15px;
-  text-align: center;
+/* Disabled state (NEW – required for job lock) */
+button:disabled {
+  background: #b5b5b5;
+  cursor: not-allowed;
 }
+
+/* -------- Status Text -------- */
+
+#status {
+  margin-top: 12px;
+  text-align: center;
+  font-weight: bold;
+  color: #444;
+}
+
+/* -------- Download Link -------- */
 
 #downloadLink {
   display: block;
@@ -55,6 +71,18 @@ button:disabled {
   text-decoration: none;
 }
 
+#downloadLink:hover {
+  text-decoration: underline;
+}
+
+/* -------- Utility -------- */
+
 .hidden {
   display: none;
+}
+
+hr {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
 }
