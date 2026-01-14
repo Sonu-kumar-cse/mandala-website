@@ -1,14 +1,14 @@
-// 🔴 CHANGE THIS ONCE AFTER DEPLOYING ON RENDER
-const BACKEND_URL = "https://backend-for-cg-isothetic-cover.onrender.com";
+// 🔴 CHANGE THIS AFTER RENDER DEPLOY
+const BACKEND_URL = "https://YOUR-APP.onrender.com";
 
 let jobId = null;
 let jobRunning = false;
 
-// -------------------- START PROCESS --------------------
+// ---------------- START ----------------
 
 async function startProcessing() {
   if (jobRunning) {
-    alert("A job is already running. Please wait.");
+    alert("Job already running");
     return;
   }
 
@@ -18,7 +18,7 @@ async function startProcessing() {
   const status = document.getElementById("status");
 
   if (!image || p1 === "" || p2 === "") {
-    alert("Please provide image and both integers");
+    alert("Please upload image and enter both integers");
     return;
   }
 
@@ -30,27 +30,36 @@ async function startProcessing() {
   try {
     jobRunning = true;
     toggleUI(true);
-    status.innerText = "Processing started… please wait";
+    status.innerText = "Processing started…";
 
     const res = await fetch(`${BACKEND_URL}/start`, {
       method: "POST",
       body: formData
     });
 
-    const data = await res.json();
-    jobId = data.job_id;
+    if (!res.ok) {
+      throw new Error("Backend error");
+    }
 
+    const data = await res.json();
+
+    if (!data.job_id) {
+      throw new Error("Invalid response from backend");
+    }
+
+    jobId = data.job_id;
     document.getElementById("getOutputBtn").disabled = false;
     status.innerText = "Processing… click Get Output after some time";
 
   } catch (err) {
     jobRunning = false;
     toggleUI(false);
-    alert("Failed to start processing");
+    status.innerText = "Failed to start ❌";
+    alert(err.message);
   }
 }
 
-// -------------------- GET OUTPUT --------------------
+// ---------------- GET OUTPUT ----------------
 
 async function getOutput() {
   const status = document.getElementById("status");
@@ -65,6 +74,10 @@ async function getOutput() {
       return;
     }
 
+    if (!res.ok) {
+      throw new Error("Failed to get result");
+    }
+
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
 
@@ -77,12 +90,13 @@ async function getOutput() {
     jobRunning = false;
     toggleUI(false);
 
-  } catch {
-    alert("Failed to fetch output");
+  } catch (err) {
+    status.innerText = "Error ❌";
+    alert(err.message);
   }
 }
 
-// -------------------- UI CONTROL --------------------
+// ---------------- UI CONTROL ----------------
 
 function toggleUI(disabled) {
   document.getElementById("startBtn").disabled = disabled;
