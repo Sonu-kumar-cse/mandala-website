@@ -9,31 +9,15 @@
 
   <div class="container">
 
-    <h2>Backend URL</h2>
-    <input
-      type="text"
-      id="backendUrlInput"
-      placeholder="https://xxxxx.trycloudflare.com"
-    />
-    <button onclick="saveBackendUrl()">Save Backend URL</button>
-
-    <hr />
-
     <h2>Input</h2>
 
+    <label for="imageInput" class="input-label">
+      Upload Mandala Image
+    </label>
     <input type="file" id="imageInput" accept="image/*" />
 
-    <input
-      type="number"
-      id="param1"
-      placeholder="Enter radius step"
-    />
-
-    <input
-      type="number"
-      id="param2"
-      placeholder="Enter angle step"
-    />
+    <input type="number" id="param1" placeholder="Enter circular step" />
+    <input type="number" id="param2" placeholder="Enter angle step" />
 
     <button id="startBtn" onclick="startProcessing()">
       Start Processing
