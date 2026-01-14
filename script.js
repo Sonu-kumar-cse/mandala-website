@@ -1,5 +1,5 @@
 // 🔴 CHANGE THIS ONCE AFTER DEPLOYING ON RENDER
-const BACKEND_URL = "https://YOUR-APP-NAME.onrender.com";
+const BACKEND_URL = "https://backend-for-cg-isothetic-cover.onrender.com";
 
 let jobId = null;
 let jobRunning = false;
